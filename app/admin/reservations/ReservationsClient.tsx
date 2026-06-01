@@ -16,9 +16,9 @@ interface EventBooking {
         date: string
     } | null | undefined
     tables: {
-        table_number: number
-        section_name: string
-        seats?: number
+        name: string
+        category: string
+        capacity?: number
     } | null | undefined
     // For Debugging:
     event_id?: string
@@ -170,13 +170,13 @@ export default function ReservationsClient({
                                             <td className="px-6 py-6">
                                                 <div className="flex items-center gap-2 text-white font-bold">
                                                     <span className="w-2 h-2 rounded-full bg-[#D4AF37]"></span>
-                                                    {booking.tables?.table_number
-                                                        ? `Table ${booking.tables.table_number}`
+                                                    {booking.tables?.name
+                                                        ? booking.tables.name
                                                         : <span className="text-red-500">Unknown Table</span>
                                                     }
                                                 </div>
                                                 <div className="text-xs text-slate-500 pl-4 mt-1">
-                                                    {booking.tables?.section_name || 'Standard'}
+                                                    {booking.tables?.category || 'Standard'}
                                                 </div>
                                             </td>
 

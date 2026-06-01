@@ -16,20 +16,17 @@ interface Customer {
 export async function getAggregatedCustomers(): Promise<Customer[]> {
     const supabase = await createClient()
 
-    // Fetch all tickets
+    // Single source of truth: ticket_purchases captures ALL payments
+    // (both standard tickets and table reservations).
+    // No need to also query event_bookings, which would double-count
+    // visits and spend for table reservation customers.
     const { data: tickets } = await supabase
         .from('ticket_purchases')
         .select('user_name, user_email, user_phone, guest_dob, total_price, created_at, events(date)')
 
-    // Fetch all bookings
-    const { data: bookings } = await supabase
-        .from('event_bookings')
-        .select('customer_name, customer_email, guest_dob, created_at, events(date), tables(price)')
-        .eq('status', 'confirmed')
-
     const customerMap = new Map<string, Customer>()
 
-    // Process Tickets
+    // Process Tickets (includes table reservations)
     tickets?.forEach(t => {
         const email = t.user_email.toLowerCase().trim()
         const existing = customerMap.get(email)
@@ -57,37 +54,6 @@ export async function getAggregatedCustomers(): Promise<Customer[]> {
                 visitCount: 1,
                 lastSeen: date,
                 dob: t.guest_dob
-            })
-        }
-    })
-
-    // Process Bookings
-    bookings?.forEach(b => {
-        const email = b.customer_email.toLowerCase().trim()
-        const existing = customerMap.get(email)
-
-        // @ts-ignore
-        const spend = b.tables?.price || 0
-        // @ts-ignore
-        const date = b.events?.date || b.created_at
-
-        if (existing) {
-            existing.totalSpend += spend
-            existing.visitCount += 1
-            if (new Date(date) > new Date(existing.lastSeen)) {
-                existing.lastSeen = date
-            }
-            if (!existing.dob && b.guest_dob) existing.dob = b.guest_dob
-        } else {
-            customerMap.set(email, {
-                id: email,
-                name: b.customer_name,
-                email: email,
-                phone: '-',
-                totalSpend: spend,
-                visitCount: 1,
-                lastSeen: date,
-                dob: b.guest_dob
             })
         }
     })

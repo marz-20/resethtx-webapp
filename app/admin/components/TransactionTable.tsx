@@ -9,6 +9,7 @@ interface Transaction {
     event_name: string
     amount: number
     date: string
+    event_date: string | null
     details: string
     status: string
 }
@@ -60,7 +61,8 @@ export default function TransactionTable({ transactions }: { transactions: Trans
                             <th className="px-6 py-4">Event</th>
                             <th className="px-6 py-4">Details</th>
                             <th className="px-6 py-4 text-right">Amount</th>
-                            <th className="px-6 py-4 text-right">Date</th>
+                            <th className="px-6 py-4 text-right">Event Date</th>
+                            <th className="px-6 py-4 text-right">Purchased</th>
                             <th className="px-6 py-4 text-center">Status</th>
                         </tr>
                     </thead>
@@ -82,7 +84,10 @@ export default function TransactionTable({ transactions }: { transactions: Trans
                                     <td className="px-6 py-4 text-right font-bold text-[#D4AF37]">
                                         ${t.amount.toLocaleString()}
                                     </td>
-                                    <td className="px-6 py-4 text-right text-xs">
+                                    <td className="px-6 py-4 text-right text-xs font-medium text-white">
+                                        {t.event_date ? new Date(t.event_date).toLocaleDateString('en-US') : <span className="text-slate-500">—</span>}
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-xs text-slate-500">
                                         {new Date(t.date).toLocaleDateString('en-US')}
                                     </td>
                                     <td className="px-6 py-4 text-center">
@@ -95,7 +100,7 @@ export default function TransactionTable({ transactions }: { transactions: Trans
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={7} className="px-6 py-8 text-center text-slate-500 italic">No transactions found.</td>
+                                <td colSpan={8} className="px-6 py-8 text-center text-slate-500 italic">No transactions found.</td>
                             </tr>
                         )}
                     </tbody>
@@ -132,8 +137,8 @@ export default function TransactionTable({ transactions }: { transactions: Trans
                             </div>
 
                             <div className="text-xs text-slate-600 pt-2 border-t border-white/5 flex justify-between">
-                                <span>Date: {new Date(t.date).toLocaleDateString('en-US')}</span>
-                                <span className="font-mono text-[10px] uppercase tracking-wider">#{t.id.slice(0, 8)}</span>
+                                <span>Event: {t.event_date ? new Date(t.event_date).toLocaleDateString('en-US') : '—'}</span>
+                                <span>Purchased: {new Date(t.date).toLocaleDateString('en-US')}</span>
                             </div>
                         </div>
                     ))
