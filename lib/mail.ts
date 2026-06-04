@@ -1,15 +1,18 @@
 import nodemailer from 'nodemailer';
 
-function getTransporter() {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+export function getTransporter() {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
     return null;
   }
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: process.env.SMTP_HOST || 'localhost',
+    port: parseInt(process.env.SMTP_PORT || '465', 10),
+    secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
     auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
     },
+    tls: { rejectUnauthorized: false }
   });
 }
 
@@ -57,7 +60,7 @@ export const sendOrderConfirmation = async (to: string, details: any, orderId?: 
   `;
   try {
     await transporter.sendMail({
-      from: '"Reset HTX" <' + process.env.GMAIL_USER + '>',
+      from: process.env.SMTP_FROM || '"Reset HTX" <sales@resethtx.com>',
       to,
       subject: `Booking Confirmed: ${eventName}`,
       html: htmlContent,
@@ -88,8 +91,8 @@ export const sendAdminBookingNotification = async (details: any) => {
 
   try {
     await transporter.sendMail({
-      from: '"Reset HTX System" <' + process.env.GMAIL_USER + '>',
-      to: process.env.GMAIL_USER, // Send to admin
+      from: process.env.SMTP_FROM || '"Reset HTX System" <sales@resethtx.com>',
+      to: process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'sales@resethtx.com', // Send to admin
       subject: `🚨 New Booking: ${eventName} - ${name}`,
       html: htmlContent,
     });
@@ -125,7 +128,7 @@ export const sendCustomerCancellation = async (to: string, details: any) => {
 
   try {
     await transporter.sendMail({
-      from: '"Reset HTX" <' + process.env.GMAIL_USER + '>',
+      from: process.env.SMTP_FROM || '"Reset HTX" <sales@resethtx.com>',
       to,
       subject: `Booking Cancelled: ${details.eventName}`,
       html: htmlContent,
@@ -150,8 +153,8 @@ export const sendAdminCancellation = async (details: any) => {
 
   try {
     await transporter.sendMail({
-      from: '"Reset HTX System" <' + process.env.GMAIL_USER + '>',
-      to: process.env.GMAIL_USER,
+      from: process.env.SMTP_FROM || '"Reset HTX System" <sales@resethtx.com>',
+      to: process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'sales@resethtx.com',
       subject: `⚠️ Booking Cancelled: ${details.eventName} - ${details.name}`,
       html: htmlContent,
     });

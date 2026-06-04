@@ -3,7 +3,7 @@
 import { createClient as createServerClient } from '@/utils/supabase/server' // used in updateMessageRemark
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
-import nodemailer from 'nodemailer'
+import { getTransporter } from '@/lib/mail'
 
 // Use service role key to bypass RLS on contact_messages table
 function getSupabaseAdmin() {
@@ -12,20 +12,7 @@ function getSupabaseAdmin() {
   return createClient(url, serviceKey)
 }
 
-function getTransporter() {
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-    return null
-  }
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.GMAIL_USER,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  })
-}
-
-const ADMIN_EMAIL = process.env.GMAIL_USER || 'resethtx@gmail.com'
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'resethtx@gmail.com'
 
 export async function submitContactForm(formData: FormData) {
   const supabase = getSupabaseAdmin()
@@ -123,7 +110,7 @@ export async function submitContactForm(formData: FormData) {
     if (transporter) {
       emailPromises.push(
         transporter.sendMail({
-          from: `"Reset HTX" <${process.env.GMAIL_USER}>`,
+          from: process.env.SMTP_FROM || '"Reset HTX" <sales@resethtx.com>',
           to: ADMIN_EMAIL,
           subject: `📬 New Inquiry from ${data.first_name} ${data.last_name} — Reset HTX`,
           html: adminHtml,
@@ -132,7 +119,7 @@ export async function submitContactForm(formData: FormData) {
 
       emailPromises.push(
         transporter.sendMail({
-          from: `"Reset HTX" <${process.env.GMAIL_USER}>`,
+          from: process.env.SMTP_FROM || '"Reset HTX" <sales@resethtx.com>',
           to: data.email,
           subject: `We received your message — Reset HTX`,
           html: customerHtml,

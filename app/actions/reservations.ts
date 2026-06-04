@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/utils/supabase/server'
-import nodemailer from 'nodemailer'
+import { getTransporter } from '@/lib/mail'
 import { stripe } from '@/lib/stripe'
 
 const GENERAL_RESERVATION_FEE = 50 // $50 USD
@@ -20,19 +20,6 @@ interface GeneralReservationInput {
 
 function generateBookingRef() {
     return 'RST-' + Math.random().toString(36).substr(2, 6).toUpperCase()
-}
-
-function getTransporter() {
-    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
-        return null
-    }
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.GMAIL_USER,
-            pass: process.env.GMAIL_APP_PASSWORD,
-        },
-    })
 }
 
 // ─── STEP 1: Create Stripe PaymentIntent ($50) ───────────────────────────────
@@ -292,7 +279,7 @@ async function sendGuestConfirmationEmail({
 
     try {
         await transporter.sendMail({
-            from: `"Reset HTX" <${process.env.GMAIL_USER}>`,
+            from: process.env.SMTP_FROM || '"Reset HTX" <sales@resethtx.com>',
             to,
             subject: `Reservation Confirmed — ${formattedDate} · Reset HTX`,
             html,
@@ -364,8 +351,8 @@ async function sendAdminNotificationEmail({
 
     try {
         await transporter.sendMail({
-            from: `"Reset HTX System" <${process.env.GMAIL_USER}>`,
-            to: process.env.GMAIL_USER,
+            from: process.env.SMTP_FROM || '"Reset HTX System" <sales@resethtx.com>',
+            to: process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'sales@resethtx.com',
             subject: `🍽️ New Reservation — ${full_name} · ${formattedDate} @ ${time}`,
             html,
         })
